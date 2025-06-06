@@ -1,0 +1,17 @@
+{
+  "name": "bike",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "cucumber-js test/feature"
+  },
+  "private": true,
+  "dependencies": {
+    "@cucumber/cucumber": "^11.3.0",
+    "chai": "^4.3.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "supertest": "^7.1.1"
+  }
+}
