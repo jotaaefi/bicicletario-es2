@@ -1,1 +1,18 @@
+const { When, Then } = require('@cucumber/cucumber');
+const request = require('supertest');
+const { expect } = require('chai');
+const app = require('../../../app'); // Corrigido: importar de app.js, não index.js
 
+let response;
+
+When('eu faço uma requisição GET para {string}', async function (string) {
+    response = await request(app).get(string);
+});
+
+Then('a resposta deve ser {int}', function (statusCode) {
+    expect(response.status).to.equal(statusCode);
+});
+
+Then('a mensagem deve conter {string}', function (message) {
+    expect(response.text).to.contain(message);
+});
