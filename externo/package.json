@@ -1,0 +1,20 @@
+{
+  "name": "bike",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "cucumber-js test/feature"
+  },
+  "private": true,
+  "dependencies": {
+    "@cucumber/cucumber": "^11.3.0",
+    "@paypal/checkout-server-sdk": "^1.0.3",
+    "chai": "^4.3.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "node-fetch": "^2.7.0",
+    "supertest": "^7.1.1"
+  }
+}
