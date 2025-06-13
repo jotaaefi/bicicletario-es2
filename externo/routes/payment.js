@@ -9,7 +9,9 @@ const paymentMethods = require("../utils/paymentMethods");
 
 router.post('/cobranca', async (req, res) => {
     let {value, userId} = req.body;
-    let response = await paymentMethods.createBill(userId, value);
+    const now = new Date();
+    const requestedTime = now.toLocaleString('pt-BR');
+    let response = await paymentMethods.createBill(userId, value, requestedTime);
 
     res.status(200).send(response);
 
