@@ -7,109 +7,45 @@ const router = express.Router();
 const paymentMethods = require("../utils/paymentMethods");
 
 
+//esse treco demora um pouco, porque tem duas coisas acontecendo aqui: a criação da cobrança
+//(no paypal) e o pagamento (no paypal)
 router.post('/cobranca', async (req, res) => {
     let {value, userId} = req.body;
     const now = new Date();
     const requestedTime = now.toLocaleString('pt-BR');
-    let response = await paymentMethods.createBill(userId, value, requestedTime);
 
-    res.status(200).send(response);
+    try{
+        await paymentMethods.createBill(userId, value, requestedTime);
+        try {
+            let payment = await paymentMethods.payBill(userId);
+            if (!payment) {
+                //não faz nada; a bill continua "PENDING"
+                res.send(500).send("Pending bill.");
+            }
+        } catch (e) {
+            if (e.message.includes("User not found")) {
+                return res.status(422).send("Invalid data: " + userId);
+            }
+            res.send(500).send("Internal Server Error: " + e.message);
+        }
+    } catch(e){
+        return res.status(500).send("Internal Server Error: " + e.message);
+    }
 
-})
+    res.status(200).send("Bill paid successfully!");
+
+});
+
+router.post('/processaCobrancasEmFila', async (req, res) => {
+    try{
+        await paymentMethods.paysLateBills();
+    } catch (e) {
+        res.status(500).send("Internal Server Error: " + e.message);
+    }
+    res.status(200).send("All bills were processed.");
+
+
+});
 
 module.exports = router;
-    // const creditCard = userData.creditCard;
-    //
-    // const billing = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${accessToken}`
-    //     },
-    //     body: JSON.stringify({
-    //         intent: "CAPTURE",
-    //         purchase_units: [{
-    //             amount: {
-    //                 currency_code: "BRL",
-    //                 value: "10.00"
-    //             }
-    //         }],
-    //         payment_source: {
-    //             card: {
-    //                 number: "4111111111111111",
-    //                 expiry: "2026-01",
-    //                 security_code: "123",
-    //                 name: "JOHN DOE",
-    //                 billing_address: {
-    //                     address_line_1: "123 Main St",
-    //                     admin_area_2: "San Jose",
-    //                     admin_area_1: "CA",
-    //                     postal_code: "95131",
-    //                     country_code: "US"
-    //                 }
-    //             }
-    //         }
-    //     })
-    // });
-
-
-// async function criarPagamentoCartao() {
-//     const accessToken = await obterToken();
-//
-//     const pagamento = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'Authorization': `Bearer ${accessToken}`
-//         },
-//         body: JSON.stringify({
-//             intent: "CAPTURE",
-//             purchase_units: [{
-//                 amount: {
-//                     currency_code: "BRL",
-//                     value: "10.00"
-//                 }
-//             }],
-//             payment_source: {
-//                 card: {
-//                     number: "4111111111111111",
-//                     expiry: "2026-01",
-//                     security_code: "123",
-//                     name: "JOHN DOE",
-//                     billing_address: {
-//                         address_line_1: "123 Main St",
-//                         admin_area_2: "San Jose",
-//                         admin_area_1: "CA",
-//                         postal_code: "95131",
-//                         country_code: "US"
-//                     }
-//                 }
-//             }
-//         })
-//     });
-//
-//     const data = await pagamento.json();
-//     console.log(JSON.stringify(data, null, 2));
-// }
-//
-// async function obterToken() {
-//     const clientId = 'SEU_CLIENT_ID_SANDBOX';
-//     const clientSecret = 'SEU_SECRET_SANDBOX';
-//
-//     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-//
-//     const resposta = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
-//         method: 'POST',
-//         headers: {
-//             'Authorization': `Basic ${credentials}`,
-//             'Content-Type': 'application/x-www-form-urlencoded'
-//         },
-//         body: 'grant_type=client_credentials'
-//     });
-//
-//     const dados = await resposta.json();
-//     return dados.access_token;
-// }
-//
-// criarPagamentoCartao();
 
