@@ -43,7 +43,7 @@ async function createBill(userId, amount, requestedTime){
 
 
     const user = userData.users.find(u => u.userId === userId);
-    if (!user) throw new Error("Usuário não encontrado");
+    if (!user) throw new Error("User not found");
 
     const response = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
         method: 'POST',
@@ -64,7 +64,8 @@ async function createBill(userId, amount, requestedTime){
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(`Erro ao criar cobrança: ${data.message}`);
+    console.log(data);
+    if (!response.ok) throw new Error(`Error creating bills: ${data.message}`);
 
     const bills = loadBills();
     if (!bills[userId]) bills[userId] = [];
@@ -101,7 +102,7 @@ async function payBill(userId){
     let user = userData.users.find(u => u.userId === userId);
 
 
-    if (!latestBill) throw new Error("Nenhuma cobrança encontrada para o usuário");
+    if (!latestBill) throw new Error("No bills where found for the user");
 
     if (latestBill.status !== "PENDING") throw new Error("Cobrança já foi paga ou cancelada");
 
@@ -141,15 +142,60 @@ async function payBill(userId){
         };
 
     } else {
-        console.error(`[payBills] Erro ao pagar ${latestBill.orderId}: ${data.message}`);
+        console.error(`[payBills] Error paying ${latestBill.orderId}: ${data.message}`);
     }
 
     return;
 
+}
 
+
+
+async function paysLateBills() {
+    // Função para pagar cobranças atrasadas, todas
+
+    const bills = loadBills();
+    const now = new Date();
+    let processedBills = [];
+    for (const userId in bills) {
+        const userBills = bills[userId];
+        for (const bill of userBills) {
+            if (bill.status === "PENDING") {
+                const requestedTime = new Date(bill.requestedTime);
+                const diffInHours = Math.abs(now - requestedTime) / 36e5; // diferença em horas
+                if (diffInHours > 24 * 6) { // se a cobrança está pendente por mais de 6 dias
+                    try {
+                        const paymentResponse = await payBill(userId);
+                        processedBills.push(paymentResponse);
+                    } catch (error) {
+                        console.error(`[paysLateBills] Error paying bill for the user ${userId}: ${error.message}`);
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+async function getsBill(billId){
+    // Função para obter uma cobrança específica pelo ID
+    const bills = loadBills();
+    for (const userId in bills) {
+        const userBills = bills[userId];
+        const bill = userBills.find(b => b.orderId === billId);
+        if (bill) {
+            return {
+                userId: userId,
+                ...bill
+            };
+        }
+    }
+    throw new Error("Bill not found");
 }
 
 module.exports = {
     createBill,
-    payBill
+    payBill,
+    paysLateBills,
+    getsBill
 }

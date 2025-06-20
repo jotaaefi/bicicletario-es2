@@ -47,5 +47,19 @@ router.post('/processaCobrancasEmFila', async (req, res) => {
 
 });
 
+router.get('/cobranca/:billId', async (req, res) => {
+    const billId = req.params.billId;
+
+    try {
+        const bill = await paymentMethods.getsBill(billId);
+        res.status(200).json(bill);
+    } catch (error) {
+        if (error.message === "Bill not found") {
+            return res.status(404).send("Bill not found.");
+        }
+        res.status(500).send("Internal Server Error: " + error.message);
+    }
+});
+
 module.exports = router;
 
