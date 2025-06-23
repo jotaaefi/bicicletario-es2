@@ -12,7 +12,7 @@ router.post('/enviarEmail', async (req, res) => {
 
     try {
         const info = await mailUtils.sendMail(email, subject, body);
-        res.status(200).send(`Email sent successfully: ${info.messageId}`);
+        res.status(200).send(`Email sent successfully: ${info}`);
     } catch (error) {
         console.error("Error sending email:", error);
         //faltou o check de erro 422
